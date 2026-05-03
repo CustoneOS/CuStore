@@ -1,0 +1,7 @@
+* Utilitzar canals de notificació per al control de gra fi (@Isira-Seneviratne)
+* Compartir aplicacions mitjançant l'ús de la compartició directa des dels detalls de l'aplicació (@fynngodau)
+* L'última pestanya mostrarà millors resultats en dispositius no anglesos
+* Actualitzacions de les biblioteques bàsiques (Jackson, androidx, gradle, etc.)
+* Suport d'etiqueta blanca polida
+
+Gràcies nous col·laboradors! @fynngodau @projectgus @glennmen @Isira-Seneviratne
