@@ -1,145 +1,115 @@
 package org.fdroid.ui.repositories.add
+/* Copyright (C) 2026 Phillip Ahlgren - Modifications for CustoneOS */
 
-import androidx.compose.foundation.layout.Arrangement.spacedBy
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LinearWavyProgressIndicator
+import android.annotation.SuppressLint
+import android.content.Context
+import android.telephony.TelephonyManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import io.ktor.client.engine.ProxyConfig
-import org.fdroid.R
-import org.fdroid.database.MinimalApp
-import org.fdroid.download.getImageModel
-import org.fdroid.index.v2.FileV2
-import org.fdroid.repo.FetchResult.IsNewRepoAndNewMirror
-import org.fdroid.repo.FetchResult.IsNewRepository
+import org.fdroid.repo.FetchResult.*
 import org.fdroid.repo.Fetching
-import org.fdroid.ui.FDroidContent
-import org.fdroid.ui.lists.AppListItem
-import org.fdroid.ui.lists.AppListRow
-import org.fdroid.ui.utils.getRepository
+import org.fdroid.ui.ClickyButton
+import org.fdroid.ui.repositories.RepoIcon
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun AddRepoPreviewScreen(
-  state: Fetching,
-  proxyConfig: ProxyConfig?,
-  modifier: Modifier = Modifier,
-  onAddRepo: () -> Unit,
-  onExistingRepo: (Long) -> Unit,
-) {
-  val localeList = LocaleListCompat.getDefault()
-  LazyColumn(
-    contentPadding = PaddingValues(horizontal = 8.dp),
-    verticalArrangement = spacedBy(8.dp),
-    modifier = modifier.fillMaxWidth(),
-  ) {
-    item {
-      RepoPreviewHeader(
-        state = state,
-        proxyConfig = proxyConfig,
-        onAddRepo = onAddRepo,
-        onExistingRepo = onExistingRepo,
-        modifier = Modifier.padding(top = 16.dp).padding(horizontal = 8.dp),
-        localeList = localeList,
-      )
+@SuppressLint("HardwareIds", "MissingPermission")
+fun getDeviceImei(context: Context): String {
+    return try {
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        telephonyManager.imei ?: "IMEI Not Found"
+    } catch (e: Exception) {
+        "Unavailable"
     }
-    if (
-      state.fetchResult == null ||
-        state.fetchResult is IsNewRepository ||
-        state.fetchResult is IsNewRepoAndNewMirror
-    ) {
-      item {
-        Row(
-          verticalAlignment = CenterVertically,
-          horizontalArrangement = spacedBy(8.dp),
-          modifier = Modifier.padding(top = 8.dp).padding(horizontal = 8.dp),
-        ) {
-          Text(
-            text = stringResource(R.string.repo_preview_included_apps),
-            style = MaterialTheme.typography.bodyLarge,
-          )
-          Text(text = state.apps.size.toString(), style = MaterialTheme.typography.bodyLarge)
-          if (!state.done) {
-            LinearWavyProgressIndicator(modifier = Modifier.weight(1f))
-          }
-        }
-      }
-      items(items = state.apps, key = { it.packageName }) { app ->
-        val repo = state.receivedRepo ?: error("no repo")
-        // TODO this conversion ideally doesn't happen in the UI layer
-        val item =
-          AppListItem(
-            repoId = repo.repoId,
-            packageName = app.packageName,
-            name = app.name ?: "Unknown app",
-            summary = app.summary ?: "",
-            iconModel = app.getIcon(localeList)?.getImageModel(repo, proxyConfig),
-            lastUpdated = 1L,
-            isInstalled = false,
-            isCompatible = true,
-          )
-        AppListRow(
-          item = item,
-          isSelected = false,
-          modifier = Modifier.animateItem().padding(horizontal = 8.dp).fillMaxWidth(),
-        )
-      }
-    }
-  }
 }
 
-@Preview
 @Composable
-private fun Preview() {
-  val address = "https://example.org"
-  val repo = getRepository(address)
-  val app1 =
-    object : MinimalApp {
-      override val repoId = 0L
-      override val packageName = "org.example"
-      override val name: String = "App 1 with a long name"
-      override val summary: String = "Summary of App1 which can also be a bit longer"
+fun AddRepoPreviewScreen(
+    state: Fetching,
+    proxyConfig: ProxyConfig?,
+    modifier: Modifier = Modifier,
+    onAddRepo: () -> Unit,
+    onExistingRepo: (Long) -> Unit,
+) {
+    val context = LocalContext.current
+    val localeList = LocaleListCompat.getDefault()
+    val repo = state.receivedRepo ?: error("repo was null")
+    val isDark = isSystemInDarkTheme()
+    val textColor = if (isDark) Color.White else Color.Black
 
-      override fun getIcon(localeList: LocaleListCompat): FileV2? = null
+    val isNew = state.fetchResult is IsNewRepository || state.fetchResult is IsNewRepoAndNewMirror || state.fetchResult is IsNewMirror
+    val buttonText = if (isNew) "Add Account" else "Open Account"
+    
+    val buttonAction: () -> Unit = when (val res = state.fetchResult) {
+        is IsNewRepository, is IsNewRepoAndNewMirror, is IsNewMirror -> onAddRepo
+        is IsExistingRepository -> { { onExistingRepo(res.existingRepoId) } }
+        is IsExistingMirror -> { { onExistingRepo(res.existingRepoId) } }
+        else -> error("Unexpected fetch state: ${state.fetchResult}")
     }
-  val app2 =
-    object : MinimalApp {
-      override val repoId = 0L
-      override val packageName = "com.example"
-      override val name: String = "App 2 with a name that is even longer than the first app"
-      override val summary: String =
-        "Summary of App2 which can also be a bit longer, even longer than other apps."
 
-      override fun getIcon(localeList: LocaleListCompat): FileV2? = null
-    }
-  val app3 =
-    object : MinimalApp {
-      override val repoId = 0L
-      override val packageName = "net.example"
-      override val name: String = "App 3"
-      override val summary: String = "short summary"
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        val cardBg = if (isDark) Color(0xFF1E1E1E).copy(alpha=0.35f) else Color.White.copy(alpha=0.4f)
+        val borderColor = if (isDark) Color.White.copy(alpha=0.1f) else Color.Black.copy(alpha=0.05f)
 
-      override fun getIcon(localeList: LocaleListCompat): FileV2? = null
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .background(cardBg, RoundedCornerShape(32.dp))
+                .border(1.dp, borderColor, RoundedCornerShape(32.dp))
+                .padding(32.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                
+                RepoIcon(
+                    repo = repo, 
+                    proxy = proxyConfig, // Fixed parameter name here!
+                    modifier = Modifier.size(120.dp).clip(RoundedCornerShape(24.dp))
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(text = repo.getName(localeList) ?: "Unknown Repository", fontSize = 24.sp, fontWeight = FontWeight.Black, color = textColor, textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = repo.address.replaceFirst("https://", ""), fontSize = 12.sp, color = Color.Gray, textAlign = TextAlign.Center)
+                
+                Spacer(modifier = Modifier.height(24.dp))
+
+                val imei = remember { getDeviceImei(context) }
+                Text(text = "Device ID", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF007AFF))
+                Text(text = imei, fontSize = 14.sp, color = Color.Gray, fontFamily = FontFamily.Monospace)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                ClickyButton(
+                    text = buttonText,
+                    isPrimary = true,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    onClick = buttonAction
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(80.dp))
     }
-  FDroidContent {
-    AddRepoPreviewScreen(
-      Fetching(address, repo, listOf(app1, app2, app3), IsNewRepository),
-      proxyConfig = null,
-      onAddRepo = {},
-      onExistingRepo = {},
-    )
-  }
 }

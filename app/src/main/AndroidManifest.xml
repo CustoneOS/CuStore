@@ -14,6 +14,8 @@
     <uses-permission android:name="android.permission.REPLACE_EXISTING_PACKAGE" />
     <uses-permission android:name="android.permission.INSTALL_SELF_UPDATES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -22,7 +24,7 @@
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE"
         tools:ignore="ForegroundServicesPolicy" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
 
     <uses-permission
         android:name="android.permission.REQUEST_INSTALL_PACKAGES"
@@ -43,6 +45,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FDroid"
         tools:targetApi="33">
+
+        <receiver android:name="org.fdroid.ui.CustoneBootReceiver" android:exported="true">
+          <intent-filter>
+              <action android:name="android.intent.action.BOOT_COMPLETED" />
+          </intent-filter>
+        </receiver>
 
         <activity
             android:name="org.fdroid.MainActivity"
@@ -137,10 +145,10 @@
         <service
             android:name="org.fdroid.install.AppInstallService"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="systemExempted" />
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="systemExempted"
             tools:node="merge" />
         <provider
             android:name="org.fdroid.install.ApkFileProvider"

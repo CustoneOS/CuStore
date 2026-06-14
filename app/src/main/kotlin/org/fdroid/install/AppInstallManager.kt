@@ -133,6 +133,7 @@ constructor(
     canAskPreApprovalNow: Boolean,
   ): InstallState {
     val packageName = appMetadata.packageName
+    android.util.Log.e("CustoneWiretap", "WIRETAP CAUGHT UI INSTALL -> Package: ${appMetadata.packageName} | RepoID: ${repo.repoId} | VersionCode: ${version.versionCode}")
     val currentState = apps.value[packageName]
     if (currentState?.showProgress == true && currentState !is InstallState.Waiting) {
       log.warn { "Attempted to install $packageName with install in progress: $currentState" }

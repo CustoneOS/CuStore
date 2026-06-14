@@ -59,7 +59,7 @@ public class DefaultInstaller extends Installer {
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 i.setData(Uri.parse("package:" + context.getPackageName()));
                 context.startActivity(i);
-            }
+            // } <-- STRAY BRACE COMMENTED OUT HERE
         }
 
         Intent installIntent = new Intent(context, DefaultInstallerActivity.class);

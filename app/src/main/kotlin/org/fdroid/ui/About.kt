@@ -94,11 +94,17 @@ fun AboutContent(modifier: Modifier = Modifier, paddingValues: PaddingValues = P
 @Composable
 private fun AboutHeader(modifier: Modifier = Modifier) {
   Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.fillMaxWidth()) {
+    
+    // Renders your custom CuStore logo safely
     Image(
-      painter = painterResource(id = R.drawable.ic_launcher_foreground),
-      contentDescription = null, // decorative element
-      modifier = Modifier.fillMaxWidth(0.25f).aspectRatio(1f).semantics { hideFromAccessibility() },
+      painter = painterResource(id = R.drawable.custore_logo), // Make sure this matches your file name!
+      contentDescription = "CuStore Logo",
+      modifier = Modifier
+        .fillMaxWidth(0.25f)
+        .aspectRatio(1f)
+        .semantics { hideFromAccessibility() },
     )
+    
     SelectionContainer {
       Text(
         text = "${stringResource(R.string.about_version)} $VERSION_NAME",
@@ -125,37 +131,19 @@ private fun AboutText() {
     style = MaterialTheme.typography.bodyLarge,
     modifier = Modifier.padding(top = 8.dp),
   )
+  
+  // Custom CuStore Source Code & License Link
   AboutLink(
-    text = stringResource(R.string.menu_website),
-    icon = Icons.Default.Home,
-    onClick = { uriHandler.openUriSafe("https://f-droid.org") },
-  )
-  AboutLink(
-    text = stringResource(R.string.about_forum),
-    icon = Icons.Default.Forum,
-    onClick = { uriHandler.openUriSafe("https://forum.f-droid.org") },
-  )
-  AboutLink(
-    text = stringResource(R.string.menu_translation),
-    icon = Icons.Default.Translate,
-    onClick = {
-      uriHandler.openUriSafe("https://f-droid.org/en/docs/Translation_and_Localization/")
-    },
-  )
-  AboutLink(
-    text = stringResource(R.string.donate_title),
-    icon = Icons.Default.MonetizationOn,
-    onClick = { uriHandler.openUriSafe("https://f-droid.org/donate/") },
-  )
-  AboutLink(
-    text = stringResource(R.string.about_source),
+    text = "CuStore Source Code & GPLv3 License",
     icon = Icons.Default.Code,
-    onClick = { uriHandler.openUriSafe("https://gitlab.com/fdroid/fdroidclient") },
+    onClick = { uriHandler.openUriSafe("https://github.com/CustoneOS/CuStore") },
   )
+  
   Text(
     text = stringResource(R.string.about_license),
     fontWeight = FontWeight.Bold,
     style = MaterialTheme.typography.bodyLarge,
+    modifier = Modifier.padding(top = 16.dp),
   )
   SelectionContainer {
     Text(

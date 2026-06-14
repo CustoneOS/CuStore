@@ -1,7 +1,10 @@
 package org.fdroid.ui.apps
+/* Copyright (C) 2026 Phillip Ahlgren - CustoneOS Spatial Engine */
 
 import android.text.format.Formatter
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -47,10 +50,18 @@ import org.fdroid.ui.utils.AsyncShimmerImage
 import org.fdroid.ui.utils.BadgeIcon
 import org.fdroid.ui.utils.ExpandIconArrow
 import org.fdroid.ui.utils.getPreviewVersion
+import org.fdroid.ui.LocalSharedTransitionScope
+import org.fdroid.ui.LocalAnimatedVisibilityScope
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpdatableAppRow(app: AppUpdateItem, isSelected: Boolean, modifier: Modifier = Modifier) {
   var isExpanded by remember { mutableStateOf(false) }
+  
+  // 🚨 PHYSICS LAYER INJECTED FOR THE ICON 🚨
+  val sharedScope = LocalSharedTransitionScope.current
+  val animScope = LocalAnimatedVisibilityScope.current
+
   Column(modifier = modifier) {
     ListItem(
       leadingContent = {
@@ -59,16 +70,27 @@ fun UpdatableAppRow(app: AppUpdateItem, isSelected: Boolean, modifier: Modifier 
             BadgeIcon(
               icon = Icons.Filled.NewReleases,
               color = MaterialTheme.colorScheme.secondary,
-              contentDescription =
-                stringResource(R.string.notification_title_single_update_available),
+              contentDescription = stringResource(R.string.notification_title_single_update_available),
             )
           }
         ) {
+          
+          var iconModifier = Modifier.size(48.dp).semantics { hideFromAccessibility() }
+          
+          if (sharedScope != null && animScope != null) {
+              with(sharedScope) {
+                  iconModifier = iconModifier.sharedElement(
+                      rememberSharedContentState(key = "myapps_icon_${app.packageName}"),
+                      animatedVisibilityScope = animScope
+                  )
+              }
+          }
+
           AsyncShimmerImage(
             model = app.iconModel,
             error = painterResource(R.drawable.ic_repo_app_default),
             contentDescription = null,
-            modifier = Modifier.size(48.dp).semantics { hideFromAccessibility() },
+            modifier = iconModifier,
           )
         }
       },
@@ -103,10 +125,6 @@ fun UpdatableAppRow(app: AppUpdateItem, isSelected: Boolean, modifier: Modifier 
   }
 }
 
-/**
- * Shows which is the installed version of the app and to which version it will upgrade. Takes into
- * account the layout direction to show the correct order of versions and the arrow.
- */
 @Composable
 fun VersionLine(app: AppUpdateItem) {
   val size = app.update.size?.let { Formatter.formatFileSize(LocalContext.current, it) }

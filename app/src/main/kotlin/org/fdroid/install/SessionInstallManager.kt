@@ -281,12 +281,38 @@ constructor(
     // do the actual installation
     try {
       installer.openSession(sessionId).use { session ->
-        apkFile.inputStream().use { inputStream ->
-          session.openWrite(packageName, 0, size).use { outputStream ->
-            inputStream.copyTo(outputStream)
-            session.fsync(outputStream)
+        var isBundle = false
+        try {
+          java.util.zip.ZipFile(apkFile).use { zip ->
+            if (zip.getEntry("base.apk") != null || zip.entries().asSequence().count { it.name.endsWith(".apk") } > 1) {
+              isBundle = true
+              log.info { "CUSTONE: Detected Split APK Bundle. Extracting splits directly into Android Session..." }
+              for (entry in zip.entries()) {
+                if (entry.name.endsWith(".apk")) {
+                  log.debug { "Writing split: ${entry.name}" }
+                  zip.getInputStream(entry).use { inputStream ->
+                    session.openWrite(entry.name, 0, entry.size).use { outputStream ->
+                      inputStream.copyTo(outputStream)
+                      session.fsync(outputStream)
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e: Exception) {
+          log.debug { "CUSTONE: Not a split bundle. Proceeding with monolithic install." }
+        }
+
+        if (!isBundle) {
+          apkFile.inputStream().use { inputStream ->
+            session.openWrite(packageName, 0, size).use { outputStream ->
+              inputStream.copyTo(outputStream)
+              session.fsync(outputStream)
+            }
           }
         }
+
         val sender = getInstallIntentSender(sessionId, packageName)
         log.info { "Committing session..." }
         session.commit(sender)

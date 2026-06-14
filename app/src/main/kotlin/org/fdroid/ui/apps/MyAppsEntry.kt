@@ -1,7 +1,6 @@
 package org.fdroid.ui.apps
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -11,7 +10,8 @@ import org.fdroid.ui.navigation.Navigator
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.myAppsEntry(navigator: Navigator, isBigScreen: Boolean) {
-  entry<NavigationKey.MyApps>(metadata = ListDetailSceneStrategy.listPane("appdetails")) {
+  // 🚨 REMOVED METADATA INTERCEPTOR 🚨
+  entry<NavigationKey.MyApps> {
     val myAppsViewModel = hiltViewModel<MyAppsViewModel>()
     val myAppsInfo =
       object : MyAppsInfo {

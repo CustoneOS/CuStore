@@ -179,3 +179,11 @@ val gitHash: String
     process.waitFor() // Ensure the command completes
     return process.inputStream.use { it.readBytes().decodeToString().trim() }
   }
+
+// INJECTED FOR CUSTONE OS NATIVE SCANNER
+dependencies {
+    implementation("androidx.camera:camera-core:1.3.1")
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+}

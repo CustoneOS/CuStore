@@ -1,5 +1,8 @@
 package org.fdroid.ui.apps
+/* Copyright (C) 2026 Phillip Ahlgren - CustoneOS Spatial Engine */
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -26,7 +29,10 @@ import org.fdroid.ui.FDroidContent
 import org.fdroid.ui.utils.AsyncShimmerImage
 import org.fdroid.ui.utils.BadgeIcon
 import org.fdroid.ui.utils.Names
+import org.fdroid.ui.LocalSharedTransitionScope
+import org.fdroid.ui.LocalAnimatedVisibilityScope
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun InstalledAppRow(
   app: MyInstalledAppItem,
@@ -34,6 +40,9 @@ fun InstalledAppRow(
   modifier: Modifier = Modifier,
   appIssue: AppIssue? = null,
 ) {
+  val sharedScope = LocalSharedTransitionScope.current
+  val animScope = LocalAnimatedVisibilityScope.current
+
   ListItem(
     leadingContent = {
       BadgedBox(
@@ -51,11 +60,23 @@ fun InstalledAppRow(
             )
         }
       ) {
+        
+        var iconModifier = Modifier.size(48.dp).semantics { hideFromAccessibility() }
+        
+        if (sharedScope != null && animScope != null) {
+            with(sharedScope) {
+                iconModifier = iconModifier.sharedElement(
+                    rememberSharedContentState(key = "myapps_icon_${app.packageName}"),
+                    animatedVisibilityScope = animScope
+                )
+            }
+        }
+
         AsyncShimmerImage(
           model = app.iconModel,
           error = painterResource(R.drawable.ic_repo_app_default),
           contentDescription = null,
-          modifier = Modifier.size(48.dp).semantics { hideFromAccessibility() },
+          modifier = iconModifier,
         )
       }
     },
