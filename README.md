@@ -6,13 +6,9 @@ This project is licensed under the GNU General Public License v3.0 (GPLv3). As p
 
 ---
 
-# F-Droid Client
+# CuStore Client
 
-[![build status](https://gitlab.com/fdroid/fdroidclient/badges/master/pipeline.svg)](https://gitlab.com/fdroid/fdroidclient/-/jobs)
-[![Translation status](https://hosted.weblate.org/widgets/f-droid/-/svg-badge.svg)](https://hosted.weblate.org/engage/f-droid/)
-
-Client for [F-Droid](https://f-droid.org), the Free Software repository system
-for Android.
+Client for CustoneOS Store.
 
 ## Building with Gradle
 
@@ -53,5 +49,5 @@ for more info.
 [![translation status](https://hosted.weblate.org/widgets/f-droid/-/f-droid/multi-auto.svg)](https://hosted.weblate.org/engage/f-droid/?utm_source=widget)
 
 ### Acknowledgements
-Icons used in this application were created by Freepik - Flaticon.
+The App Icon used in CuStore Client was created by Freepik - Flaticon.
 Attribution: [Ios icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/ios)
