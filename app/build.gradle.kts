@@ -18,8 +18,8 @@ android {
     applicationId = "com.custone.store"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2000005
-    versionName = "2.0-alpha5"
+    versionCode = 1
+    versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

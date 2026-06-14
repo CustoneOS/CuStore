@@ -1,6 +1,5 @@
 package org.fdroid.ui.discover
-/* Copyright (C) 2026 Phillip Ahlgren - Isolated Parallax & Anti-Flash Engine */
-
+/* Copyright (C) 2026 Phillip Ahlgren - Modifications for CustoneOS */
 import android.app.Application
 import android.content.Context
 import android.widget.Toast
@@ -84,7 +83,24 @@ fun DiscoverContent(
   val cp = cinematicAnim.value
   
   val uiAlpha = if (isCinematic) { if (cp < 0.65f) 0f else ((cp - 0.65f) / 0.35f).coerceIn(0f, 1f) } else 1f
+
   val vibrantAlpha = if (isCinematic) { if (cp < 0.1f) 0f else if (cp < 0.4f) (cp - 0.1f) / 0.3f else 1f - ((cp - 0.4f) / 0.6f) } else 0f
+
+  // Deduplication & Random Pool Logic
+  val moreAppsPool = remember(discoverModel) {
+      val displayedPackages = (
+          discoverModel.newApps.take(6) + 
+          discoverModel.recentlyUpdatedApps.take(6) + 
+          (discoverModel.mostDownloadedApps?.take(6) ?: emptyList())
+      ).map { it.packageName }.toSet()
+
+      val allLoadedApps = discoverModel.newApps + discoverModel.recentlyUpdatedApps + (discoverModel.mostDownloadedApps ?: emptyList())
+
+      allLoadedApps
+          .filterNot { it.packageName in displayedPackages }
+          .distinctBy { it.packageName }
+          .shuffled()
+  }
 
   Box(modifier = Modifier.fillMaxSize()) {
       
@@ -130,13 +146,30 @@ fun DiscoverContent(
 
         var tileIndexCount = 0
         if (discoverModel.newApps.isNotEmpty()) {
-          item { val listType = AppListType.New(stringResource(R.string.app_list_new)); CustoneAppGrid(title = listType.title, apps = discoverModel.newApps, startIndex = tileIndexCount, cp = cp, uiAlpha = uiAlpha, isCinematic = isCinematic, onTitleTap = { onListTap(listType) }, onAppTap = onAppTap); tileIndexCount += 6 }
+          item { val listType = AppListType.New(stringResource(R.string.app_list_new)); CustoneAppGrid(title = listType.title, apps = discoverModel.newApps.take(6), startIndex = tileIndexCount, cp = cp, uiAlpha = uiAlpha, isCinematic = isCinematic, onTitleTap = { onListTap(listType) }, onAppTap = onAppTap); tileIndexCount += discoverModel.newApps.take(6).size }
         }
         if (!discoverModel.recentlyUpdatedApps.isEmpty()) {
-          item { val listType = AppListType.RecentlyUpdated(stringResource(R.string.app_list_recently_updated)); CustoneAppGrid(title = listType.title, apps = discoverModel.recentlyUpdatedApps, startIndex = tileIndexCount, cp = cp, uiAlpha = uiAlpha, isCinematic = isCinematic, onTitleTap = { onListTap(listType) }, onAppTap = onAppTap); tileIndexCount += 6 }
+          item { val listType = AppListType.RecentlyUpdated(stringResource(R.string.app_list_recently_updated)); CustoneAppGrid(title = listType.title, apps = discoverModel.recentlyUpdatedApps.take(6), startIndex = tileIndexCount, cp = cp, uiAlpha = uiAlpha, isCinematic = isCinematic, onTitleTap = { onListTap(listType) }, onAppTap = onAppTap); tileIndexCount += discoverModel.recentlyUpdatedApps.take(6).size }
         }
         if (!discoverModel.mostDownloadedApps.isNullOrEmpty()) {
-          item { val listType = AppListType.MostDownloaded(stringResource(R.string.app_list_most_downloaded)); CustoneAppGrid(title = listType.title, apps = discoverModel.mostDownloadedApps, startIndex = tileIndexCount, cp = cp, uiAlpha = uiAlpha, isCinematic = isCinematic, onTitleTap = { onListTap(listType) }, onAppTap = onAppTap); tileIndexCount += 6 }
+          item { val listType = AppListType.MostDownloaded(stringResource(R.string.app_list_most_downloaded)); CustoneAppGrid(title = listType.title, apps = discoverModel.mostDownloadedApps.take(6), startIndex = tileIndexCount, cp = cp, uiAlpha = uiAlpha, isCinematic = isCinematic, onTitleTap = { onListTap(listType) }, onAppTap = onAppTap); tileIndexCount += discoverModel.mostDownloadedApps.take(6).size }
+        }
+        
+        if (moreAppsPool.isNotEmpty()) {
+          item { 
+              val listType = AppListType.New("All Apps")
+              CustoneAppGrid(
+                  title = "More Apps", 
+                  apps = moreAppsPool.take(24), 
+                  startIndex = tileIndexCount, 
+                  cp = cp, 
+                  uiAlpha = uiAlpha, 
+                  isCinematic = isCinematic, 
+                  onTitleTap = { onListTap(listType) }, 
+                  onAppTap = onAppTap
+              ) 
+              tileIndexCount += moreAppsPool.take(24).size 
+          }
         }
       }
 
@@ -179,6 +212,7 @@ fun CustoneSearchBarPlaceholder(onClick: () -> Unit) {
     if (sharedScope != null && animScope != null) {
         with(sharedScope) { boxModifier = boxModifier.sharedBounds(rememberSharedContentState(key = "search_bar_bounds"), animatedVisibilityScope = animScope) }
     }
+
     Row(modifier = boxModifier.bounceClick { onClick() }.background(if (isDark) Color(0xFF1E1E1E).copy(alpha=0.4f) else Color.White.copy(alpha=0.5f), RoundedCornerShape(24.dp)).border(1.dp, if (isDark) Color.White.copy(alpha=0.15f) else Color.Black.copy(alpha=0.1f), RoundedCornerShape(24.dp)).padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.Search, contentDescription = "Search", tint = if (isDark) Color.White else Color.Black)
         Spacer(modifier = Modifier.width(12.dp))
@@ -193,7 +227,7 @@ fun CustoneAppGrid(title: String, apps: List<AppDiscoverItem>, startIndex: Int, 
             Text(text = title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
             Text(text = "See All >", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF007AFF))
         }
-        val chunkedApps = apps.take(6).chunked(2)
+        val chunkedApps = apps.chunked(2)
         chunkedApps.forEachIndexed { rowIndex, rowApps ->
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 rowApps.forEachIndexed { colIndex, app -> 

@@ -49,8 +49,7 @@ junit-report.xml
 captures/
 
 /fdroid/
-publish.sh
 create_ota.sh
-To Move and sign apk
 Compile and Move APK
 Instructions for Updating CuStore
+Instuctions to Publish

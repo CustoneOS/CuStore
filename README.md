@@ -16,12 +16,7 @@ for Android.
 
 ## Building with Gradle
 
-    ./gradlew assembleRelease
-
-## Direct download
-
-You can [download the application](https://f-droid.org/F-Droid.apk) directly
-from our site or [browse it in the repo](https://f-droid.org/app/org.fdroid.fdroid).
+    ./gradlew assembleBasicDefaultRelease
 
 ## Coding style
 
@@ -29,38 +24,6 @@ This project uses [ktfmt](https://github.com/facebook/ktfmt) and enforces it via
 You can run the following to auto-format your changes:
 
     ./gradlew ktfmtFormat
-
-## Libraries
-
-Core F-Droid functionality is split into re-usable libraries
-to make using F-Droid technology in your own projects as easy as possible.
-
-[More information about libraries](libs/README.md)
-
-## Contributing
-
-See our [Contributing doc](CONTRIBUTING.md) for information on how to report
-issues, translate the app into your language or help with development.
-
-## IRC
-
-We are on `#fdroid` and `#fdroid-dev` on OFTC. We hold weekly dev meetings
-on `#fdroid-dev` on Thursdays at 11:30h UTC, which usually last half an hour.
-
-## FAQ
-
-* Why does F-Droid require "Unknown Sources" to install apps by default?
-
-Because a regular Android app cannot act as a package manager on its
-own. To do so, it would require system privileges (see below), similar
-to what Google Play does.
-
-* Can I avoid enabling "Unknown Sources" by installing F-Droid as a
-  privileged system app?
-
-This used to be the case, but no longer is. Now the [Privileged
-Extension](https://gitlab.com/fdroid/privileged-extension) is the one that should be placed in
-the system. It can be bundled with a ROM or installed via a zip.
 
 ## License
 
