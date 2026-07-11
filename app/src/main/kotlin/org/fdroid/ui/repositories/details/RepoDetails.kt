@@ -3,14 +3,13 @@ package org.fdroid.ui.repositories.details
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
 import android.telephony.TelephonyManager
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,19 +20,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import org.fdroid.R
+import org.fdroid.download.getImageModel
 import org.fdroid.repo.RepoUpdateWorker
 import org.fdroid.ui.ClickyButton
+import org.fdroid.ui.utils.AsyncShimmerImage
 import org.fdroid.ui.utils.BigLoadingIndicator
 import org.fdroid.ui.utils.MeteredConnectionDialog
 import org.fdroid.ui.utils.asRelativeTimeString
@@ -84,8 +86,6 @@ fun RepoDetails(
               },
               title = { Text("Account", fontSize = 28.sp, fontWeight = FontWeight.Black, color = textColor) },
               actions = {
-                
-                // 🚨 KINETIC SYNC BUTTON 🚨
                 var refreshRotation by remember { mutableFloatStateOf(0f) }
                 val rotation by animateFloatAsState(targetValue = refreshRotation, animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing), label = "spin")
 
@@ -128,24 +128,30 @@ fun RepoDetails(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                         
-                        var qrCodeBitmap by remember(repo.address) { mutableStateOf<android.graphics.Bitmap?>(null) }
+                        val avatarUrl = repo.getIcon(localeList)?.getImageModel(repo, info.model.proxy) ?: "${repo.address}/icons/avatar.png"
+                            android.util.Log.e("CUSTORE_DEBUG", "Type: ${avatarUrl?.let { it::class.simpleName }} | Value: $avatarUrl")
                         
-                        LaunchedEffect(repo.address) { 
-                            qrCodeBitmap = info.actions.generateQrCode(repo) 
-                        }
-                        
-                        if (qrCodeBitmap != null) {
-                            Image(
-                                bitmap = qrCodeBitmap!!.asImageBitmap(), contentDescription = "Device Linked Account",
-                                modifier = Modifier.size(120.dp).clip(RoundedCornerShape(24.dp)).background(Color.White).padding(8.dp)
-                            )
-                        } else {
-                            Box(modifier = Modifier.size(120.dp).background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(24.dp)))
-                        }
+                        android.util.Log.e("CUSTORE_DEBUG", "The real working URL is: $avatarUrl")
+                        // 🚨 CROPPED CIRCLE ENGINE INJECTED 🚨
+                        AsyncShimmerImage(
+                            model = avatarUrl, 
+                            contentDescription = "Account Profile Picture",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(120.dp)
+                                .border(3.dp, Color(0xFF007AFF), CircleShape)
+                                .padding(4.dp)
+                                .clip(CircleShape)
+                                .background(Color.Gray.copy(alpha = 0.2f))
+                        )
 
                         Spacer(modifier = Modifier.height(24.dp))
-                        Text(text = "Primary Account", fontSize = 24.sp, fontWeight = FontWeight.Black, color = textColor)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        val accountName = repo.getName(localeList) ?: "Primary Account"
+                        Text(text = accountName, fontSize = 24.sp, fontWeight = FontWeight.Black, color = textColor, textAlign = TextAlign.Center)
+                        
+
+                        Spacer(modifier = Modifier.height(24.dp))
 
                         val imei = remember { getDeviceImei(context) }
                         Text(text = "Device ID", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF007AFF))
@@ -155,7 +161,7 @@ fun RepoDetails(
 
                         ClickyButton(
                             text = "Browse Linked Apps", isPrimary = true, modifier = Modifier.fillMaxWidth().height(48.dp),
-                            onClick = { onShowAppsClicked(repo.getName(localeList) ?: "Unknown Repository", repo.repoId) }
+                            onClick = { onShowAppsClicked(accountName, repo.repoId) }
                         )
                     }
                 }

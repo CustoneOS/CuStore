@@ -24,4 +24,5 @@ data class LoadedDiscoverModel(
   val categories: Map<CategoryGroup, List<CategoryItem>>?,
   val searchTextFieldState: TextFieldState,
   val hasRepoIssues: Boolean,
+  val profileIconModel: Any? = null
 ) : DiscoverModel()

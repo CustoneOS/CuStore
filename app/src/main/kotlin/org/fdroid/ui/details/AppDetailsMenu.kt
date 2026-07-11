@@ -9,20 +9,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Preview
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.UpdateDisabled
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import org.fdroid.R
 import org.fdroid.ui.FDroidContent
-import org.fdroid.ui.utils.startActivitySafe
 import org.fdroid.ui.utils.testApp
 
 @Composable
@@ -31,8 +27,6 @@ fun AppDetailsMenu(
   uninstallLauncher: ActivityResultLauncher<Intent>,
   onDismiss: () -> Unit,
 ) {
-  val res = LocalResources.current
-  val context = LocalContext.current
   if (item.appPrefs != null)
     DropdownMenuItem(
       leadingIcon = { Icon(Icons.Default.Preview, null) },
@@ -74,17 +68,6 @@ fun AppDetailsMenu(
       enabled = !item.ignoresAllUpdates,
       onClick = {
         item.actions.ignoreThisUpdate()
-        onDismiss()
-      },
-    )
-  if (item.actions.shareApk != null)
-    DropdownMenuItem(
-      leadingIcon = { Icon(Icons.Default.Share, null) },
-      text = { Text(stringResource(R.string.menu_share_apk)) },
-      onClick = {
-        val s = res.getString(R.string.menu_share_apk)
-        val i = Intent.createChooser(item.actions.shareApk, s)
-        context.startActivitySafe(i)
         onDismiss()
       },
     )

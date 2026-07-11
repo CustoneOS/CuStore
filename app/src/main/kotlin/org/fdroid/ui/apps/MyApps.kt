@@ -79,7 +79,7 @@ fun MyApps(
                       Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                   }
               },
-              title = { Text("My Apps", fontSize = 28.sp, fontWeight = FontWeight.Black, color = textColor) },
+              title = { Text("Installed Apps", fontSize = 28.sp, fontWeight = FontWeight.Black, color = textColor) },
               actions = {
                   IconButton(onClick = { searchActive = true }) {
                       Icon(Icons.Default.Search, contentDescription = "Search")

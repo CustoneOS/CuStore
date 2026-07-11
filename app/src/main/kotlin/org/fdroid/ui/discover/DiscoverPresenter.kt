@@ -74,7 +74,13 @@ fun DiscoverPresenter(
       it.toAppDiscoverItem(repository, proxyConfig)
     }
   val categories = categoriesFlow.collectAsState(null).value
+  
   val repositoriesFlow = repoManager.repositoriesState
+  val repositories = repositoriesFlow.collectAsState(null).value
+  val primaryRepo = repositories?.firstOrNull { it.repoId == 1L } ?: repositories?.firstOrNull()
+  
+  // 🚨 CUSTONE FIX: ADDED DIRECT URL FALLBACK TO BYPASS DATABASE 🚨
+  val profileIconModel = primaryRepo?.getIcon(localeList)?.getImageModel(primaryRepo, proxyConfig) ?: primaryRepo?.let { "${it.address}/icons/repo_icon.png" }
 
   return if (
     !mostDownloadedApps.isNullOrEmpty() ||
@@ -92,10 +98,10 @@ fun DiscoverPresenter(
       categories = categories?.groupBy { it.group },
       searchTextFieldState = searchTextFieldState,
       hasRepoIssues = hasRepoIssuesFlow.collectAsState(false).value,
+      profileIconModel = profileIconModel
     )
   } else {
     // everything is still null or empty, so figure out why
-    val repositories = repositoriesFlow.collectAsState(null).value
     if (repositories?.all { !it.enabled } == true) {
       NoEnabledReposDiscoverModel
     } else if (isFirstStart || recentlyUpdatedApps?.size == 0) {

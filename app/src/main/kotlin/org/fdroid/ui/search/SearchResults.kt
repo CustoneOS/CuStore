@@ -25,7 +25,7 @@ import org.fdroid.ui.categories.CategoryChip
 import org.fdroid.ui.categories.CategoryItem
 import org.fdroid.ui.categories.ChipFlowRow
 import org.fdroid.ui.lists.AppListItem
-import org.fdroid.ui.lists.AppListRow
+import org.fdroid.ui.lists.CustoneAppListItemRouted
 import org.fdroid.ui.lists.AppListType
 import org.fdroid.ui.navigation.NavigationKey
 import org.fdroid.ui.utils.BigLoadingIndicator
@@ -61,7 +61,8 @@ fun SearchResults(
   } else {
     LazyColumn(
       state = listState,
-      contentPadding = paddingValues,
+      contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = paddingValues.calculateTopPadding() + 8.dp, bottom = paddingValues.calculateBottomPadding() + 120.dp),
+      verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
       modifier = modifier.fillMaxSize().imePadding(),
     ) {
       if (searchResults.categories.isNotEmpty()) {
@@ -69,28 +70,11 @@ fun SearchResults(
           CategoriesFlowRow(searchResults.categories, onNav)
         }
       }
-      if (searchResults.apps.isNotEmpty()) {
-        item(key = "appsHeader", contentType = "appsHeader") {
-          Column {
-            if (searchResults.categories.isNotEmpty()) {
-              HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp))
-            }
-            Text(
-              text = stringResource(R.string.apps),
-              style = MaterialTheme.typography.labelLarge,
-              modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
-            )
-          }
-        }
-      }
+
       items(searchResults.apps, key = { it.packageName }, contentType = { "app" }) { item ->
-        AppListRow(
-          item = item,
-          isSelected = false,
-          modifier =
-            Modifier.fillMaxWidth().animateItem().clickable {
-              onNav(NavigationKey.AppDetails(item.packageName))
-            },
+        CustoneAppListItemRouted(
+            item = item,
+            onClick = { onNav(NavigationKey.AppDetails(item.packageName)) }
         )
       }
     }

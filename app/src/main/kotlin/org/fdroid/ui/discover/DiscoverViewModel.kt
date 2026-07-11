@@ -1,5 +1,7 @@
 package org.fdroid.ui.discover
 
+import org.fdroid.download.getImageModel
+
 import android.annotation.SuppressLint
 import android.app.Application
 import androidx.core.os.LocaleListCompat
@@ -102,4 +104,20 @@ constructor(
         )
       }
     }
+
+  fun getAccountAvatarModel(): kotlinx.coroutines.flow.Flow<Any?> = kotlinx.coroutines.flow.flow {
+      try {
+          val repo = db.getRepositoryDao().getRepository(1L)
+          if (repo != null) {
+              val localeList = androidx.core.os.LocaleListCompat.getAdjustedDefault()
+              val icon = repo.getIcon(localeList)
+              emit(icon?.getImageModel(repo, null))
+          } else {
+              emit(null)
+          }
+      } catch (e: Exception) {
+          emit(null)
+      }
+  }.flowOn(kotlinx.coroutines.Dispatchers.IO)
+
 }

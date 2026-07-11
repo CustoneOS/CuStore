@@ -1,4 +1,5 @@
 package org.fdroid.ui.discover
+import androidx.compose.runtime.collectAsState
 /* Copyright (C) 2026 Phillip Ahlgren - Modifications for CustoneOS */
 import android.app.Application
 import android.content.Context
@@ -47,6 +48,13 @@ import org.fdroid.repo.RepoUpdateWorker
 import org.fdroid.ui.CustoneLayeredMist
 import org.fdroid.ui.bounceClick
 import org.fdroid.ui.lists.*
+import org.fdroid.ui.search.ExpandedSearch
+import org.fdroid.ui.search.SearchViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import org.fdroid.ui.navigation.NavigationKey
 import org.fdroid.ui.utils.AsyncShimmerImage
 import org.fdroid.ui.LocalSharedTransitionScope
@@ -64,6 +72,8 @@ fun DiscoverContent(
   modifier: Modifier = Modifier,
 ) {
   val context = LocalContext.current
+  val searchViewModel: SearchViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+  var isSearchExpanded by remember { mutableStateOf(false) }
   val isDark = isSystemInDarkTheme()
   val textColor = if (isDark) Color.White else Color.Black
 
@@ -102,9 +112,13 @@ fun DiscoverContent(
           .shuffled()
   }
 
+  val searchPushScale by animateFloatAsState(targetValue = if (isSearchExpanded) 0.92f else 1f, animationSpec = tween(400, easing = FastOutSlowInEasing))
+  val searchPushAlpha by animateFloatAsState(targetValue = if (isSearchExpanded) 0.3f else 1f, animationSpec = tween(400))
+
   Box(modifier = Modifier.fillMaxSize()) {
       
-      CustoneLayeredMist(isOverlay = false)
+      Box(modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = searchPushScale; scaleY = searchPushScale; alpha = searchPushAlpha }) {
+          CustoneLayeredMist(isOverlay = false)
 
       if (isCinematic && vibrantAlpha > 0f) {
           Box(modifier = Modifier.fillMaxSize().alpha(vibrantAlpha).background(Brush.radialGradient(listOf(Color(0xFF00E5FF).copy(alpha=0.6f), Color(0xFFFF00FF).copy(alpha=0.6f), Color.Transparent))))
@@ -133,14 +147,28 @@ fun DiscoverContent(
                         Icon(Icons.Filled.Sync, contentDescription = "Refresh", tint = textColor, modifier = Modifier.graphicsLayer { rotationZ = rotation }) 
                     }
                     IconButton(onClick = { onNav(NavigationKey.MyApps) }) { Icon(Icons.Filled.Apps, contentDescription = "My Apps", tint = textColor) }
-                    IconButton(onClick = { onNav(NavigationKey.RepoDetails(1L)) }) { Icon(Icons.Filled.AccountCircle, contentDescription = "Account", tint = textColor) }
                     IconButton(onClick = { onNav(NavigationKey.Settings) }) { Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = textColor) }
+                    
+                    IconButton(onClick = { onNav(NavigationKey.RepoDetails(1L)) }) {
+                        val ctx = androidx.compose.ui.platform.LocalContext.current
+                        val imei = androidx.compose.runtime.remember { org.fdroid.ui.repositories.details.getDeviceImei(ctx) }
+                        val discoverViewModel: org.fdroid.ui.discover.DiscoverViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                        val avatarModel = discoverViewModel.getAccountAvatarModel().collectAsState(initial = null).value
+
+                        org.fdroid.ui.utils.AsyncShimmerImage(
+                            model = avatarModel ?: "https://custoneos.com/repo/imei-${imei}/repo_icon.png",
+                            contentDescription = "Account",
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.size(28.dp).border(1.5.dp, Color(0xFF007AFF), androidx.compose.foundation.shape.CircleShape).padding(2.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                        )
+                    }
                 }
             }
         }
-        item { 
+
+        item {
             Box(modifier = Modifier.graphicsLayer(alpha = uiAlpha)) { 
-                CustoneSearchBarPlaceholder(onClick = { onNav(NavigationKey.Search) }) 
+                CustoneSearchBarPlaceholder(onClick = { isSearchExpanded = true }) 
             } 
         }
 
@@ -198,6 +226,29 @@ fun DiscoverContent(
               Box(modifier = Modifier.fillMaxSize().alpha(bloomAlpha * 0.85f).background(Color.White))
           }
       }
+      } // Close the 3D depth Box
+
+      AnimatedVisibility(
+          visible = isSearchExpanded,
+          enter = fadeIn(tween(300)),
+          exit = fadeOut(tween(300)),
+          modifier = Modifier
+      ) {
+          BackHandler { isSearchExpanded = false }
+          Box(modifier = Modifier.fillMaxSize().background(if (isDark) Color(0xFF121212) else Color(0xFFF8F8F8))) {
+              ExpandedSearch(
+                  textFieldState = searchViewModel.textFieldState,
+                  searchResults = searchViewModel.searchResults.collectAsStateWithLifecycle(null).value,
+                  onSearch = { searchViewModel.search(it) },
+                  onNav = { 
+                      isSearchExpanded = false // Dismiss search so it doesn't linger on back press
+                      onNav(it) 
+                  },
+                  onBack = { isSearchExpanded = false },
+                  onSearchCleared = { searchViewModel.onSearchCleared() }
+              )
+          }
+      }
   }
 }
 
@@ -216,7 +267,7 @@ fun CustoneSearchBarPlaceholder(onClick: () -> Unit) {
     Row(modifier = boxModifier.bounceClick { onClick() }.background(if (isDark) Color(0xFF1E1E1E).copy(alpha=0.4f) else Color.White.copy(alpha=0.5f), RoundedCornerShape(24.dp)).border(1.dp, if (isDark) Color.White.copy(alpha=0.15f) else Color.Black.copy(alpha=0.1f), RoundedCornerShape(24.dp)).padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.Search, contentDescription = "Search", tint = if (isDark) Color.White else Color.Black)
         Spacer(modifier = Modifier.width(12.dp))
-        Text("Search CuStore...", fontSize = 16.sp, color = if (isDark) Color.LightGray else Color.DarkGray)
+        Text("Search for Apps...", fontSize = 16.sp, color = if (isDark) Color.LightGray else Color.DarkGray)
     }
 }
 

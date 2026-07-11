@@ -81,21 +81,57 @@ fun AddRepoPreviewScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 
-                RepoIcon(
-                    repo = repo, 
-                    proxy = proxyConfig, // Fixed parameter name here!
-                    modifier = Modifier.size(120.dp).clip(RoundedCornerShape(24.dp))
-                )
+                val imei = remember { getDeviceImei(context) }
+                val bitmapState = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<android.graphics.Bitmap?>(null) }
+                
+                androidx.compose.runtime.LaunchedEffect(imei) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        try {
+                            val imageUrl = "https://custoneos.com/repo/imei-${imei}/repo_icon.png"
+                            val connection = java.net.URL(imageUrl).openConnection() as java.net.HttpURLConnection
+                            connection.doInput = true
+                            connection.connectTimeout = 4000
+                            connection.readTimeout = 4000
+                            connection.connect()
+                            bitmapState.value = android.graphics.BitmapFactory.decodeStream(connection.inputStream)
+                        } catch (e: Exception) {
+                            android.util.Log.e("CUSTORE_OOBE", "Preview image fetch failed: ${e.message}")
+                        }
+                    }
+                }
+
+                if (bitmapState.value != null) {
+                    androidx.compose.ui.viewinterop.AndroidView(
+                        factory = { viewCtx -> 
+                            android.widget.ImageView(viewCtx).apply { 
+                                scaleType = android.widget.ImageView.ScaleType.CENTER_CROP 
+                            } 
+                        },
+                        update = { imgView -> 
+                            imgView.setImageBitmap(bitmapState.value) 
+                        },
+                        modifier = Modifier.size(120.dp).border(3.dp, Color(0xFF007AFF), androidx.compose.foundation.shape.CircleShape).padding(4.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                    )
+                } else {
+                    // Fallback to a clean gray circle/square if network hasn't responded yet
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .border(3.dp, Color(0xFF007AFF), androidx.compose.foundation.shape.CircleShape)
+                            .padding(4.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(if (isDark) Color(0xFF2C2C2C) else Color.LightGray)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(text = repo.getName(localeList) ?: "Unknown Repository", fontSize = 24.sp, fontWeight = FontWeight.Black, color = textColor, textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = repo.address.replaceFirst("https://", ""), fontSize = 12.sp, color = Color.Gray, textAlign = TextAlign.Center)
+
                 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val imei = remember { getDeviceImei(context) }
+
                 Text(text = "Device ID", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF007AFF))
                 Text(text = imei, fontSize = 14.sp, color = Color.Gray, fontFamily = FontFamily.Monospace)
 

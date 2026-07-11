@@ -37,7 +37,7 @@ fun CustoneAppRowHijack(packageName: String, onClick: () -> Unit, content: @Comp
         }
     }
     
-    boxModifier = boxModifier.background(if (isDark) Color(0xFF1E1E1E).copy(alpha=0.35f) else Color.White.copy(alpha=0.4f), RoundedCornerShape(16.dp)).border(1.dp, if (isDark) Color.White.copy(alpha=0.1f) else Color.Black.copy(alpha=0.05f), RoundedCornerShape(16.dp)).padding(horizontal = 4.dp, vertical = 2.dp)
+    boxModifier = boxModifier.background(if (isDark) Color(0xFF1E1E1E).copy(alpha=0.35f) else Color.White.copy(alpha=0.4f), RoundedCornerShape(16.dp)).border(1.dp, if (isDark) Color.White.copy(alpha=0.1f) else Color.Black.copy(alpha=0.05f), RoundedCornerShape(16.dp)).heightIn(min = 88.dp).padding(horizontal = 16.dp, vertical = 12.dp)
 
     Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
         MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(surface = Color.Transparent, surfaceVariant = Color.Transparent, background = Color.Transparent)) { content() }
